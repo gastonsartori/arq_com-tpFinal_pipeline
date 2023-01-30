@@ -64,19 +64,19 @@ module Unidad_control #(
 
     //Señales de control para las diferentes etapas
     //IF
-    output [1:0]            o_controlunit_PcSrc,    //especifica que entrada del mux sera el nuevo PC
+    output reg [1:0]            o_controlunit_PcSrc,    //especifica que entrada del mux sera el nuevo PC
     //EX
-    output [1:0]            o_controlunit_RegDst,   //especifica cual es el indentificador del registro destino (0->rt,1->rd)
-    output [1:0]            o_controlunit_ALUSrc,   //ALUSrc[0] especifica cual es el primer operando de la ALU (0->rs, 1->rt)
+    output reg [1:0]            o_controlunit_RegDst,   //especifica cual es el indentificador del registro destino (00->rt,01->rd,10->GPR31)
+    output reg [1:0]            o_controlunit_ALUSrc,   //ALUSrc[0] especifica cual es el primer operando de la ALU (0->rs, 1->rt)
                                                     //ALUSrc[1]especifica cual es el segundo operando de la ALU (0->rt, 1->campo inmediato (offset))
-    output [NB_ALUOP-1:0]   o_controlunit_ALUOp,    
+    output reg [NB_ALUOP-1:0]   o_controlunit_ALUOp,    
     //MEM
-    output                  o_controlunit_MemRead,  //habilita la lectura de memoria
-    output                  o_controlunit_MemWrite, //habilita la escritura de memoria
-    output                  o_controlunit_Branch,   //especifica si la instruccion es un branch o no
+    output reg                 o_controlunit_MemRead,  //habilita la lectura de memoria
+    output reg                 o_controlunit_MemWrite, //habilita la escritura de memoria
+    output reg                 o_controlunit_Branch,   //especifica si la instruccion es un branch o no
     //WB
-    output                  o_controlunit_RegWrite, //habilita o no la escritura en el banco de registros
-    output [1:0]            o_controlunit_MemtoReg, //especifica cual es la fuente al escribir en registros (0->ALU,1->memoria)
+    output reg                 o_controlunit_RegWrite, //habilita o no la escritura en el banco de registros
+    output reg [1:0]            o_controlunit_MemtoReg, //especifica cual es la fuente al escribir en registros (00->ALU,01->memoria,10->ret addr)
 
     //Señales de Flush para los regsitros de segmentacion en caso de branch
     output  reg             o_controlunit_IF_ID_Flush,
@@ -99,7 +99,7 @@ begin
         
         o_controlunit_RegDst = 2'b00;
         o_controlunit_ALUSrc = 2'b00; 
-        o_controlunit_ALUOp = R_TYPE_ALUCODE; 
+        o_controlunit_ALUOp = R_TYPE_ALUOP; 
 
         o_controlunit_MemRead =  1'b0;
         o_controlunit_MemWrite =  1'b0;
@@ -117,7 +117,7 @@ begin
         case(i_controlunit_op)
             R_TYPE_OPCODE:
             begin        
-                o_controlunit_ALUOp = R_TYPE_ALUCODE; 
+                o_controlunit_ALUOp = R_TYPE_ALUOP; 
                 
                 case(i_controlop_funct)
                     SLL_FUNC, SRL_FUNC, SRA_FUNC:
