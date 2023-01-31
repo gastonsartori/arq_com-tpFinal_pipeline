@@ -4,7 +4,7 @@ module IF#(
     parameter   NB_PC = 32,         //Cantidad de bits del PC
     parameter   NB_INSTR = 32,       // Ancho de bits de las instrucciones
     parameter   NB_INST_INDEX = 26, //Cantidad de bits de instr_index
-    parameter   CANT_SUMADOR = 1    // Cantidad a sumar  en sumador
+    parameter   CANT_SUMADOR = 4    // Cantidad a sumar  en sumador
 )(
     input               i_if_clock,
     input               i_if_reset,

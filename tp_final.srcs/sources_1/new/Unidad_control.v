@@ -288,7 +288,7 @@ begin
                 o_controlunit_PcSrc = 2'b00;           
                 
                 o_controlunit_RegDst = 2'b00;  
-                o_controlunit_ALUSrc = 2'b10;   
+                o_controlunit_ALUSrc = 2'b00;   
                 o_controlunit_ALUOp = LUI_ALUOP;
 
                 o_controlunit_MemRead =  1'b0;

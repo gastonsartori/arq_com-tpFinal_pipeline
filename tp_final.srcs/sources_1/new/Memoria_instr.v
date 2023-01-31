@@ -37,31 +37,5 @@ module Mem_instruction#(
     end
     endgenerate
 
-    assign o_instmem = mem_instructions[i_instmem_pc]; //DESCOMENTAR PARA NO UTUILIZAR LA UART, Y COMENTRAR LO DE ABAJO
-    
-    /*
-    always @(negedge i_instmem_write_e) begin
-        if(i_instmem_write_e && i_instmem_enable) // Si esta habilitada la memoria en modo escritura
-        begin
-          if((i_instmem_write_addr == i_instmem_write_addr) && (i_instmem_write_data == i_instmem_write_data)) //Hay que comprobar los inputs 
-            mem_instructions[i_instmem_write_addr] <= i_instmem_write_data; // Se escribe en memmoria la instruccion  
-        end
-        else //Si no esta habilitada la escritura o no esta habilitada la memoria
-          o_instmem <= o_instmem;
-      end
-      
-      always @(posedge i_instmem_clock)
-      begin
-          if(i_instmem_read_e && i_instmem_enable) // Si esta habilitada la memoria en modo lectura
-            begin
-                if((i_instmem_pc == i_instmem_pc) && (mem_instructions[i_instmem_pc] == mem_instructions[i_instmem_pc])) // Se comprueban los input                                      
-                begin
-                    if(i_instmem_write_e && (i_instmem_write_addr == i_instmem_write_addr) && (i_instmem_write_data == i_instmem_write_data)) // Si esta activa la escritura tambien
-                        o_instmem <= i_instmem_write_data; // Se lee la direccion del debug que viene por escritura
-                    else
-                        o_instmem <= mem_instructions[i_instmem_pc]; // Se lee la direccion a la que apunta el Program Counter
-                end           
-            end   
-      end
-    */
+    assign o_instmem = mem_instructions[i_instmem_pc>>2]; 
 endmodule
