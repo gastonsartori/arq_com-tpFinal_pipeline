@@ -48,7 +48,7 @@ module Unidad_control_ALU#(
     parameter   SRLV_ALUCODE    =   4'b1011,
     parameter   SRAV_ALUCODE    =   4'b1100,
     parameter   LUI_ALUCODE     =   4'b1101,
-    parameter   BNE_ALUCODE     =   4'b1110,
+    parameter   BNE_ALUCODE     =   4'b1110
     
 )(
 
