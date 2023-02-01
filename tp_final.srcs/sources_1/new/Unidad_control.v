@@ -74,6 +74,8 @@ module Unidad_control #(
     output reg                 o_controlunit_MemRead,  //habilita la lectura de memoria
     output reg                 o_controlunit_MemWrite, //habilita la escritura de memoria
     output reg                 o_controlunit_Branch,   //especifica si la instruccion es un branch o no
+    output reg [1:0]           o_controlunit_BHW,              //Señal de control que indica el tamaño del direccioonamiento (00->byte, 01->halfword, 10->word) 
+    output reg                 o_controlunit_ExtSign,          //Señal de control que indica si extender el signo del dato leido o no
     //WB
     output reg                 o_controlunit_RegWrite, //habilita o no la escritura en el banco de registros
     output reg [1:0]            o_controlunit_MemtoReg, //especifica cual es la fuente al escribir en registros (00->ALU,01->memoria,10->ret addr)
@@ -104,6 +106,8 @@ begin
         o_controlunit_MemRead =  1'b0;
         o_controlunit_MemWrite =  1'b0;
         o_controlunit_Branch =   1'b0;
+        o_controlunit_BHW = 2'b00;
+        o_controlunit_ExtSign = 1'b0;
         
         o_controlunit_RegWrite =  1'b0;
         o_controlunit_MemtoReg =  2'b00;
@@ -130,6 +134,8 @@ begin
                         o_controlunit_MemRead =  1'b0;
                         o_controlunit_MemWrite =  1'b0;
                         o_controlunit_Branch =   1'b0;
+                        o_controlunit_BHW = 2'b00;  //no se usa
+                        o_controlunit_ExtSign = 1'b0;//no se usa
                         
                         o_controlunit_RegWrite =  1'b1;
                         o_controlunit_MemtoReg =  2'b01; 
@@ -144,6 +150,8 @@ begin
                         o_controlunit_MemRead =  1'b0;
                         o_controlunit_MemWrite =  1'b0;
                         o_controlunit_Branch =   1'b0;
+                        o_controlunit_BHW = 2'b00;//no se usa
+                        o_controlunit_ExtSign = 1'b0;//no se usa
                         
                         o_controlunit_RegWrite =  1'b1;
                         o_controlunit_MemtoReg =  2'b01;                         
@@ -158,6 +166,8 @@ begin
                         o_controlunit_MemRead =  1'b0;
                         o_controlunit_MemWrite =  1'b0;
                         o_controlunit_Branch =   1'b0;
+                        o_controlunit_BHW = 2'b00;//no se usa
+                        o_controlunit_ExtSign = 1'b0;//no se usa
                         
                         o_controlunit_RegWrite =  1'b0;
                         o_controlunit_MemtoReg =  2'b00; //no se usa
@@ -172,6 +182,8 @@ begin
                         o_controlunit_MemRead =  1'b0;
                         o_controlunit_MemWrite =  1'b0;
                         o_controlunit_Branch =   1'b0;
+                        o_controlunit_BHW = 2'b00;//no se usa
+                        o_controlunit_ExtSign = 1'b0;//no se usa
                         
                         o_controlunit_RegWrite =  1'b1;
                         o_controlunit_MemtoReg =  2'b10; 
@@ -186,6 +198,8 @@ begin
                         o_controlunit_MemRead =  1'b0;
                         o_controlunit_MemWrite =  1'b0;
                         o_controlunit_Branch =   1'b0;
+                        o_controlunit_BHW = 2'b00;
+                        o_controlunit_ExtSign = 1'b0;
                         
                         o_controlunit_RegWrite =  1'b0;
                         o_controlunit_MemtoReg =  2'b00;   
@@ -193,7 +207,7 @@ begin
                 endcase
             end
             //TIPO I
-            LB_OPCODE, LH_OPCODE, LW_OPCODE, LWU_OPCODE,LBU_OPCODE,LHU_OPCODE:
+            LB_OPCODE:
             begin
                 o_controlunit_PcSrc = 2'b00;           
                 
@@ -204,11 +218,98 @@ begin
                 o_controlunit_MemRead =  1'b1;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;
+                o_controlunit_ExtSign = 1'b1;
                 
                 o_controlunit_RegWrite =  1'b1;
                 o_controlunit_MemtoReg =  2'b00;
             end
-            SB_OPCODE, SH_OPCODE, SW_OPCODE:
+            LH_OPCODE:
+            begin
+                o_controlunit_PcSrc = 2'b00;           
+                
+                o_controlunit_RegDst = 2'b00;
+                o_controlunit_ALUSrc = 2'b10; 
+                o_controlunit_ALUOp = LOAD_STORE_ADDI_ALUOP; 
+
+                o_controlunit_MemRead =  1'b1;
+                o_controlunit_MemWrite =  1'b0;
+                o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b01;
+                o_controlunit_ExtSign = 1'b1;
+                
+                o_controlunit_RegWrite =  1'b1;
+                o_controlunit_MemtoReg =  2'b00;
+            end 
+            LW_OPCODE:
+            begin
+                o_controlunit_PcSrc = 2'b00;           
+                
+                o_controlunit_RegDst = 2'b00;
+                o_controlunit_ALUSrc = 2'b10; 
+                o_controlunit_ALUOp = LOAD_STORE_ADDI_ALUOP; 
+
+                o_controlunit_MemRead =  1'b1;
+                o_controlunit_MemWrite =  1'b0;
+                o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b10;
+                o_controlunit_ExtSign = 1'b1;
+                
+                o_controlunit_RegWrite =  1'b1;
+                o_controlunit_MemtoReg =  2'b00;
+            end 
+            LWU_OPCODE:
+            begin
+                o_controlunit_PcSrc = 2'b00;           
+                
+                o_controlunit_RegDst = 2'b00;
+                o_controlunit_ALUSrc = 2'b10; 
+                o_controlunit_ALUOp = LOAD_STORE_ADDI_ALUOP; 
+
+                o_controlunit_MemRead =  1'b1;
+                o_controlunit_MemWrite =  1'b0;
+                o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b10;
+                o_controlunit_ExtSign = 1'b0;
+                
+                o_controlunit_RegWrite =  1'b1;
+                o_controlunit_MemtoReg =  2'b00;
+            end 
+            LBU_OPCODE:
+            begin
+                o_controlunit_PcSrc = 2'b00;           
+                
+                o_controlunit_RegDst = 2'b00;
+                o_controlunit_ALUSrc = 2'b10; 
+                o_controlunit_ALUOp = LOAD_STORE_ADDI_ALUOP; 
+
+                o_controlunit_MemRead =  1'b1;
+                o_controlunit_MemWrite =  1'b0;
+                o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;
+                o_controlunit_ExtSign = 1'b0;
+                
+                o_controlunit_RegWrite =  1'b1;
+                o_controlunit_MemtoReg =  2'b00;
+            end
+            LHU_OPCODE:
+            begin
+                o_controlunit_PcSrc = 2'b00;           
+                
+                o_controlunit_RegDst = 2'b00;
+                o_controlunit_ALUSrc = 2'b10; 
+                o_controlunit_ALUOp = LOAD_STORE_ADDI_ALUOP; 
+
+                o_controlunit_MemRead =  1'b1;
+                o_controlunit_MemWrite =  1'b0;
+                o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b01;
+                o_controlunit_ExtSign = 1'b0;
+                
+                o_controlunit_RegWrite =  1'b1;
+                o_controlunit_MemtoReg =  2'b00;
+            end
+            SB_OPCODE:
             begin
                 o_controlunit_PcSrc = 2'b00;           
                 
@@ -219,6 +320,42 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b1;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;
+                o_controlunit_ExtSign = 1'b0;//no se usa
+                
+                o_controlunit_RegWrite =  1'b0;
+                o_controlunit_MemtoReg =  2'b00;  //no se usa
+            end
+            SH_OPCODE:
+            begin
+                o_controlunit_PcSrc = 2'b00;           
+                
+                o_controlunit_RegDst = 2'b00; //no se usa
+                o_controlunit_ALUSrc = 2'b10; 
+                o_controlunit_ALUOp = LOAD_STORE_ADDI_ALUOP; 
+
+                o_controlunit_MemRead =  1'b0;
+                o_controlunit_MemWrite =  1'b1;
+                o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b01;
+                o_controlunit_ExtSign = 1'b0;//no se usa
+                
+                o_controlunit_RegWrite =  1'b0;
+                o_controlunit_MemtoReg =  2'b00;  //no se usa
+            end 
+            SW_OPCODE:
+            begin
+                o_controlunit_PcSrc = 2'b00;           
+                
+                o_controlunit_RegDst = 2'b00; //no se usa
+                o_controlunit_ALUSrc = 2'b10; 
+                o_controlunit_ALUOp = LOAD_STORE_ADDI_ALUOP; 
+
+                o_controlunit_MemRead =  1'b0;
+                o_controlunit_MemWrite =  1'b1;
+                o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b10;
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b0;
                 o_controlunit_MemtoReg =  2'b00;  //no se usa
@@ -234,6 +371,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;      //no se usa
+                o_controlunit_ExtSign = 1'b0;   //no se usa
                 
                 o_controlunit_RegWrite =  1'b1;
                 o_controlunit_MemtoReg =  2'b01;
@@ -249,6 +388,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;//no se usa
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b1;
                 o_controlunit_MemtoReg =  2'b01;
@@ -264,6 +405,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;//no se usa
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b1;
                 o_controlunit_MemtoReg =  2'b01;
@@ -279,6 +422,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;//no se usa
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b1;
                 o_controlunit_MemtoReg =  2'b01;
@@ -294,6 +439,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;//no se usa
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b1;
                 o_controlunit_MemtoReg =  2'b01;
@@ -309,6 +456,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;//no se usa
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b1;
                 o_controlunit_MemtoReg =  2'b01;
@@ -324,6 +473,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b1;
+                o_controlunit_BHW = 2'b00;//no se usa
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b0;
                 o_controlunit_MemtoReg =  2'b00; //no se usa
@@ -339,6 +490,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b1;
+                o_controlunit_BHW = 2'b00;//no se usa
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b0;
                 o_controlunit_MemtoReg =  2'b00; //no se usa
@@ -354,6 +507,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;//no se usa
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b0;
                 o_controlunit_MemtoReg =  2'b00; //no se usa
@@ -369,6 +524,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;//no se usa
+                o_controlunit_ExtSign = 1'b0;//no se usa
                 
                 o_controlunit_RegWrite =  1'b1;
                 o_controlunit_MemtoReg =  2'b10; 
@@ -384,6 +541,8 @@ begin
                 o_controlunit_MemRead =  1'b0;
                 o_controlunit_MemWrite =  1'b0;
                 o_controlunit_Branch =   1'b0;
+                o_controlunit_BHW = 2'b00;
+                o_controlunit_ExtSign = 1'b0;
                 
                 o_controlunit_RegWrite =  1'b0;
                 o_controlunit_MemtoReg =  2'b00; 

@@ -57,9 +57,12 @@ module ID#(
     output                  o_id_MemRead,  //habilita la lectura de memoria
     output                  o_id_MemWrite, //habilita la escritura de memoria
     output                  o_id_Branch,   //especifica si la instruccion es un branch o no
+    output [1:0]            o_id_BHW,              //Señal de control que indica el tamaño del direccioonamiento (00->byte, 01->halfword, 10->word) 
+    output                  o_id_ExtSign,          //Señal de control que indica si extender el signo del dato leido o no
     //WB
     output                  o_id_RegWrite, //habilita o no la escritura en el banco de registros
     output [1:0]            o_id_MemtoReg, //especifica cual es la fuente al escribir en registros (0->ALU,1->memoria)
+
 
     //Señales de Flush para los regsitros de segmentacion en caso de branch
     output             o_id_IF_ID_Flush,
