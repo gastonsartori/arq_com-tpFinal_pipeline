@@ -11,7 +11,7 @@ module ID#(
     parameter   NB_FUNCTION = 6,    //Cantidad de bits del campo funct en las instrucciones
     parameter   NB_OFFSET = 16,     //Cantidad de bits del campo inmediato en las instrucciones
     parameter   NB_DIR = 26,        //Cantidad de bits del campo direccion (instr_index) en las instrucciones
-    parameter   NB_OP = 6,          //Cantidad de bits del campo op en las instrucciones
+    parameter   NB_OP = 6,          //Cantidad de bits del campo op en las instrucciones 
 
     parameter   NB_REG = 32,        // Cantidad de bits de los registros
 
@@ -23,7 +23,9 @@ module ID#(
     parameter   B_START_RD = 11,
     parameter   B_START_OFFSET = 0,
     parameter   B_START_FUNCTION = 0,
-    parameter   B_START_OP = 26
+    parameter   B_START_OP = 26,
+
+    parameter   B_START_PC_TO_JUMP = 28
         
 )(
     input [NB_PC-1:0]       i_id_pc,            //PC desde IF/ID
@@ -37,13 +39,16 @@ module ID#(
     input                   i_id_zero,                  //Señal desde EX/MEM, si la salida de la ALU fue cero, va a la unidad de control
     input                   i_id_control_enable,        //Señal desde StallUnit, para no modificar las señales de control, va a la unidad de control
     input                   i_id_write_enable,          //Señal desde StallUnit, para no actualizar la salida del banco de registros
-
+    input [NB_RS -1 : 0]    i_id_reg_addr, //direccion del reg leido por du
+    
+    output [NB_REG - 1 :0]  o_id_reg_data, //registro leido por du
     output [NB_PC - 1 :0]       o_id_pc,                    //PC a ID/EX   
     output [NB_REG - 1 :0]      o_id_dataA, o_id_dataB,     //Datos leidos desde el banco de registros
     output [NB_REG - 1 :0]      o_id_offset_ext,            //Offset con el signo extendido
     output [NB_RT - 1 :0]       o_id_rt,                    //campo rt
     output [NB_RD - 1 :0]       o_id_rd,                    //campo rd
     output [NB_RS - 1 :0]       o_id_rs,                    //campo rs
+    output [NB_PC - 1 :0]       o_id_jump_addr,
 
     //Señales de control para las diferentes etapas
     //IF
@@ -65,8 +70,9 @@ module ID#(
 
 
     //Señales de Flush para los regsitros de segmentacion en caso de branch
-    output             o_id_IF_ID_Flush,
-    output             o_id_EX_MEM_Flush  
+    output                  o_id_IF_ID_Flush,
+    output                  o_id_EX_MEM_Flush,
+    output                  o_id_excute_branch
 );
 
 wire [NB_RT - 1 :0] rt;
@@ -81,7 +87,7 @@ assign o_id_pc = i_id_pc;
 assign o_id_rt = rt;
 assign o_id_rs = rs;
 assign o_id_rd = rd;
-
+assign o_id_jump_addr = {i_id_pc[NB_PC-1:B_START_PC_TO_JUMP],i_id_instruction[NB_DIR-1:0],2'b00};
 
 Banco_registros Registers
 (
@@ -93,11 +99,12 @@ Banco_registros Registers
     .i_regbank_rB(rt), //campo RT de la instruccion [20:16]
     .i_regbank_rW(i_id_write_reg),
     .i_regbank_dataW(i_id_write_data),
+    .i_regbank_reg_addr(i_id_reg_addr),
          
     .o_regbank_dataA(o_id_dataA), 
-    .o_regbank_dataB(o_id_dataB) 
+    .o_regbank_dataB(o_id_dataB),
+    .o_regbank_reg_data(o_id_reg_data)
 );
-
 
 Ext_signo Ext_signo
 (
@@ -120,10 +127,13 @@ Unidad_control Control
     .o_controlunit_MemRead(o_id_MemRead), 
     .o_controlunit_MemWrite(o_id_MemWrite),
     .o_controlunit_Branch(o_id_Branch),
+    .o_controlunit_BHW(o_id_BHW),
+    .o_controlunit_ExtSign(o_id_ExtSign),
     .o_controlunit_RegWrite(o_id_RegWrite),
     .o_controlunit_MemtoReg(o_id_MemtoReg),
     .o_controlunit_IF_ID_Flush(o_id_IF_ID_Flush),
-    .o_controlunit_EX_MEM_Flush(o_id_EX_MEM_Flush) 
+    .o_controlunit_EX_MEM_Flush(o_id_EX_MEM_Flush),
+    .o_controlunit_excute_branch(o_id_excute_branch)
 );
 
 endmodule

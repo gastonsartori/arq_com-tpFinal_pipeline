@@ -48,9 +48,21 @@ module Top_pipeline#(
 )(
     input       i_pipeline_clock,
     input       i_pipeline_reset,
-    input       i_pipeline_start, //controla los enable del PC, reg de IF/ID y unidad de control. Si no esta en 1 no arranca el pipeline
+    //input       i_pipeline_start, //controla los enable del PC, reg de IF/ID y unidad de control. Si no esta en 1 no arranca el pipeline
+    input       i_pipeline_instr_done, //escritura de instrucciones desde DU
+    input       [NB_PC-1:0] i_pipeline_instr_addr,
+    input       [NB_INSTR-1:0 ]i_pipeline_instr_data,
+    input       i_pipeline_enable, //desde la debug unit, esta señal habilita o no avanzar un ciclo
+    input       [NB_RS -1 : 0] i_pipeline_reg_addr, //desde du, para direccionar registros
+    input       [NB_REG - 1 :0] i_pipeline_read_addr, //desde du, para direccion memoria
 
-    output [NB_REG - 1 : 0]  o_pipeline_WB_data //lo que se escribe en los registros
+    output      [NB_REG - 1 :0] o_pipeline_read_data,   //data de memoria direccionara por du
+
+    output      [NB_REG - 1 :0] o_pipeline_reg_data,
+
+    output [NB_REG - 1 : 0]     o_pipeline_WB_data, //lo que se escribe en los registros
+    output                      o_pipeline_halt, //señal hacia la debug unit, cuando se leyo un halt
+    output  [NB_PC-1:0]         o_pipeline_pc  //valor del pc, hacia la debug unit
 
 );
 
@@ -199,18 +211,25 @@ module Top_pipeline#(
         .i_if_pc_offset(EX_MEM_PC_offset_to_IF), //PC PC+OFFSET
         .i_if_pc_register(ID_dataA_to_ID_EX),   //PC contenido en dataA(rs) instrucciones JR y JALR 
         .i_if_pc_jump(ID_jump_addr_to_ID_EX),   //PC PC||inst_index||00
-        .i_if_PCWrite(riesgounit_PCWrite_to_IF & i_pipeline_start),
+        .i_if_PCWrite(riesgounit_PCWrite_to_IF & i_pipeline_enable),
         .i_if_mux_selector(ID_PcSrc_to_ID_EX),
         .i_if_execute_branch(ID_excute_branch_to_IF),
+        .i_if_instr_done(i_pipeline_instr_done),             // Enable para escritura debug
+        .i_if_mem_enable(i_pipeline_enable),                                  // Memoria enable
+        .i_if_instr_addr(i_pipeline_instr_addr),        // Direccion de escritura de instruccion
+        .i_if_instr_data(i_pipeline_instr_data),        // Instruccion a escribir en memoria de instrucciones
+
         
         .o_if_pc_sum(IF_pc_to_IF_ID),
-        .o_if_instruction(IF_instr_to_IF_ID)
+        .o_if_instruction(IF_instr_to_IF_ID),
+        .o_if_halt(o_pipeline_halt),
+        .o_if_pc(o_pipeline_pc)
     ); 
 
     IF_ID IF_ID(
         .i_if_id_clock(i_pipeline_clock),
         .i_if_id_reset(i_pipeline_reset),
-        .i_if_id_write_enable(riesgounit_write_to_IF_ID & i_pipeline_start),
+        .i_if_id_write_enable(riesgounit_write_to_IF_ID & i_pipeline_enable),
         .i_if_id_flush(ID_IF_ID_Flush),
         .i_if_id_pc(IF_pc_to_IF_ID),
         .i_if_id_instruction(IF_instr_to_IF_ID),
@@ -221,7 +240,7 @@ module Top_pipeline#(
     ID ID (
         .i_id_clock(i_pipeline_clock),
         .i_id_reset(i_pipeline_reset),
-        .i_id_write_enable(1'b1), //desde la uart para habiltiar la escritura
+        .i_id_write_enable(i_pipeline_enable), //desde la uart para habiltiar la escritura
 
         .i_id_pc(IF_ID_pc_to_ID),
         .i_id_instruction(IF_ID_instr_to_ID),
@@ -231,9 +250,11 @@ module Top_pipeline#(
         .i_id_RegWrite(WB_RegWrite_to_ID),
 
         .i_id_zero(EX_MEM_alu_zero_to_ID),
-        .i_id_control_enable(riesgounit_control_enable_to_ID  & i_pipeline_start),
+        .i_id_control_enable(riesgounit_control_enable_to_ID),
         .i_id_branch(EX_MEM_Branch_to_ID),
+        .i_id_reg_addr(i_pipeline_reg_addr),
         
+        .o_id_reg_data(o_pipeline_reg_data),
         .o_id_dataA(ID_dataA_to_ID_EX),
         .o_id_dataB(ID_dataB_to_ID_EX),
         .o_id_offset_ext(ID_offset_ext_to_ID_EX),
@@ -263,7 +284,7 @@ module Top_pipeline#(
     ID_EX ID_EX(
         .i_id_ex_clock(i_pipeline_clock),
         .i_id_ex_reset(i_pipeline_reset),
-        .i_id_ex_write_enable(1'b1),
+        .i_id_ex_write_enable(i_pipeline_enable),
         .i_id_ex_pc(ID_pc_to_ID_EX),
         .i_id_ex_dataA(ID_dataA_to_ID_EX),
         .i_id_ex_dataB(ID_dataB_to_ID_EX),
@@ -363,7 +384,7 @@ module Top_pipeline#(
         .i_ex_mem_BHW(EX_BHW_to_EX_MEM),
         .i_ex_mem_ExtSign(EX_ExtSign_to_EX_MEM),
         .i_ex_mem_flush(ID_EX_MEM_Flush),
-        .i_ex_mem_enable(1'b1),
+        .i_ex_mem_enable(i_pipeline_enable),
         .o_ex_mem_pc(EX_MEM_pc_to_MEM),
         .o_ex_mem_pc_offset(EX_MEM_PC_offset_to_IF),
         .o_ex_mem_alu_result(EX_MEM_alu_result_to_MEM),
@@ -383,7 +404,7 @@ module Top_pipeline#(
     MEM MEM(
         .i_mem_clock(i_pipeline_clock),
         .i_mem_reset(i_pipeline_reset),
-        .i_mem_enable(1'b1),
+        .i_mem_enable(i_pipeline_enable),
         .i_mem_pc(EX_MEM_pc_to_MEM),
         .i_mem_dataW(EX_MEM_dataB_to_MEM),
         .i_mem_dataALU(EX_MEM_alu_result_to_MEM),
@@ -394,13 +415,15 @@ module Top_pipeline#(
         .i_mem_MemtoReg(EX_MEM_MemtoReg_to_MEM),
         .i_mem_BHW(EX_MEM_BHW_to_MEM),
         .i_mem_ExtSign(EX_MEM_ExtSign_to_MEM),
-
+        .i_mem_read_addr(i_pipeline_read_addr),
+        .o_mem_read_data(o_pipeline_read_data),
         .o_mem_dataR(MEM_dataR_MEM_WB),
         .o_mem_dataALU(MEM_dataALU_to_MEM_WB),
         .o_mem_write_reg(MEM_write_reg_to_MEM_WB),
         .o_mem_MemtoReg(MEM_MemtoReg_to_MEM_WB),
         .o_mem_RegWrite(MEM_RegWrite_to_MEM_WB),
         .o_mem_pc(MEM_pc_to_MEM_WB)
+        
     );
 
     MEM_WB MEM_WB(
@@ -412,7 +435,7 @@ module Top_pipeline#(
         .i_mem_wb_pc(MEM_pc_to_MEM_WB),
         .i_mem_wb_MemtoReg(MEM_MemtoReg_to_MEM_WB),
         .i_mem_wb_RegWrite(MEM_RegWrite_to_MEM_WB),
-        .i_mem_wb_enable(1'b1),
+        .i_mem_wb_enable(i_pipeline_enable),
         
         .o_mem_wb_dataR(MEM_WB_dataR_WB),
         .o_mem_wb_dataALU(MEM_WB_dataALU_to_WB),

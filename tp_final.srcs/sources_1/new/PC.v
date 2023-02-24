@@ -9,7 +9,7 @@ module PC#(
         input wire                                  i_pc_enable,
         input wire                                  i_pc_clock,
         input wire                                  i_pc_reset,    
-        input wire    [INST_MEMORY_BITS -1 : 0]     i_pc_instruction,
+        input wire                                  i_pc_halt,
         input wire    [NB_PC - 1 : 0]               i_pc_mux,
    
         output wire   [NB_PC - 1 : 0]               o_pc
@@ -24,7 +24,7 @@ module PC#(
         begin
             pc <= 0;
         end
-        else if(i_pc_enable && (i_pc_instruction != HALT_OPCODE))
+        else if(i_pc_enable && ~i_pc_halt)
         begin
             pc <= i_pc_mux;
         end

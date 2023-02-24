@@ -19,13 +19,16 @@ module MEM#(
     input                               i_mem_enable,
     input [1:0]                         i_mem_BHW,              //Señal de control que indica el tamaño del direccioonamiento (00->byte, 01->halfword, 10->word) 
     input                               i_mem_ExtSign,          //Señal de control que indica si extender el signo del dato leido o no
+    input [NB_REG - 1 : 0]              i_mem_read_addr,
 
     output [NB_REG - 1 : 0]             o_mem_dataR,            //Dato leido de memoria
     output [NB_REG - 1 : 0]             o_mem_dataALU,          //Dato de salida de la alu
     output [NB_RD - 1 : 0]              o_mem_write_reg,        //Registro de destino
     output [NB_PC - 1 : 0]              o_mem_pc,
     output [1:0]                        o_mem_MemtoReg,
-    output                              o_mem_RegWrite
+    output                              o_mem_RegWrite,
+
+    output [NB_REG - 1 : 0]             o_mem_read_data   //lectura hacia du
 );
 
 Memoria_datos Mem_data(
@@ -38,7 +41,9 @@ Memoria_datos Mem_data(
     .i_datamem_ExtSign(i_mem_ExtSign),
     .i_datamem_addr(i_mem_dataALU),
     .i_datamem_dataW(i_mem_dataW),
-    .o_datamem_dataR(o_mem_dataR) 
+    .i_datamem_read_addr(i_mem_read_addr),
+    .o_datamem_dataR(o_mem_dataR),
+    .o_datamem_read_data(o_mem_read_data)
 );
 
 assign o_mem_dataALU = i_mem_dataALU;

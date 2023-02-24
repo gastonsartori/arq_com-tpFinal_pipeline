@@ -16,8 +16,13 @@ module Banco_registros#(
     input [NB_ADDR - 1 : 0]     i_regbank_rB,                   //Entrada de direccionamiento del segundo registro a leer (ID)
     input [NB_ADDR - 1 : 0]     i_regbank_rW,               //Entrada de direccionamiento del registro a escribir (WB)
     input [NB_DATA - 1 : 0]     i_regbank_dataW,               //Entrada del dato a escribir (WB) 
+
+    input [NB_ADDR -1 : 0]      i_regbank_reg_addr, //direccionamiento para lectura desde debug unit
             
-    output [NB_DATA - 1 : 0]    o_regbank_dataA, o_regbank_dataB
+    output [NB_DATA - 1 : 0]    o_regbank_dataA,
+    output [NB_DATA - 1 : 0]    o_regbank_dataB,
+    output [NB_DATA - 1 : 0]    o_regbank_reg_data
+
 );
 
 //Banco de registros - REG_DEPTH registros de NB_DATA bits
@@ -28,6 +33,7 @@ reg    [NB_DATA - 1 : 0]    regbank_dataB, regbank_dataB_next;
 
 assign o_regbank_dataA = regbank_dataA;
 assign o_regbank_dataB = regbank_dataB;
+assign o_regbank_reg_data = registers[i_regbank_reg_addr];
 
 // Lectura(actualizacion de la salida) en el negedge para leer los datos ya actualizados
 /*
@@ -77,12 +83,15 @@ end
 */
 
 //PROBAR ESTA IMPLEMENTACION
-
+integer reg_index;
 always @(posedge i_regbank_clock)
 begin
     if(i_regbank_reset)
     begin
-        reset_all();
+        for (reg_index = 0; reg_index < REG_DEPTH; reg_index = reg_index + 1)
+          registers[reg_index] <= {NB_DATA{1'b0}};
+        regbank_dataA <=  {NB_DATA{1'b0}};
+        regbank_dataB <=  {NB_DATA{1'b0}};
     end
     else
     begin
@@ -101,16 +110,6 @@ begin
         regbank_dataB <= registers[i_regbank_rB];
     end
 end
-
-task reset_all;
-    begin:resetReg
-        integer reg_index;
-        for (reg_index = 0; reg_index < REG_DEPTH; reg_index = reg_index + 1)
-          registers[reg_index] = {NB_DATA{1'b0}};
-        regbank_dataA =  {NB_DATA{1'b0}};
-        regbank_dataB  =  {NB_DATA{1'b0}};
-    end
-endtask
 
 /*    
 task reset_all;
