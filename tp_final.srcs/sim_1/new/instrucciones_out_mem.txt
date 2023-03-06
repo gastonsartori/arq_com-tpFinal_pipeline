@@ -1,0 +1,14 @@
+204b0005 -> addi 11,2,5 ; reg[11] = reg[2] + 5 = 5
+20000001 -> addi 0,0,1 ; reg[0] = reg[0] + 1 = 1
+20410001 -> addi 1,2,1 ; reg[1] = reg[2] + 1 = 1
+20020003 -> addi 2,0,0 ; reg[2] = reg[0] + 3 = 4
+20230008 -> addi 3,1,8 ; reg[3] = reg[1] + 8 = 9
+10850001 -> beq 2,4,5 ; if(reg[4]==reg(5)) jump pc+1 (no ejecuta la siguiente)
+204b0005 -> addi 11,2,5 ; reg[11] = reg[2] + 5 = 9
+20000004 -> addi 0,0,1 ; reg[0] = reg[0] + 4 = 5
+0C00000B -> jal 11; salta a 00610823, inst_index=11, reg[31]=40
+20410001 -> addi 1,2,1 ; reg[1] = reg[2] + 1 = 5 (si se ejecuta)
+00012021 -> addu 4,0,1 ; reg[4] = reg[0] + reg[1] = 10 (no se ejecuta)
+00610823 -> subu 3,1,1 ; reg[1] = reg[3] - reg[1] = 4
+00405009 -> jalr 10,11 ; pc = reg[2] = 4 , reg[10] = 56
+aaaaaaaa
