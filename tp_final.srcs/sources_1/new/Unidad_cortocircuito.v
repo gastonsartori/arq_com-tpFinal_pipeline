@@ -33,28 +33,32 @@ module Unidad_cortocircuito#(
     input [NB_RD - 1 : 0]   i_cortounit_EX_MEM_write_reg,    //registro destino de la instr en MEM
     input [NB_RD - 1 : 0]   i_cortounit_MEM_WB_write_reg,    //registro destino de la instr en WB
 
-    output reg [1 : 0]      i_cortounit_control_corto1,             //Control del mux de corto del operando 1
-    output reg [1 : 0]      i_cortounit_control_corto2              //Control del mux de corto del operando 2
+    output reg [1 : 0]      o_cortounit_control_corto1,             //Control del mux de corto del operando 1
+    output reg [1 : 0]      o_cortounit_control_corto2              //Control del mux de corto del operando 2
 );
 
 //Condiciones del cortocircuito
 always@(*) begin
 
     //operando1 (rs)
-    if (i_cortounit_EX_MEM_RegWrite && i_cortounit_EX_MEM_write_reg != 0 && i_cortounit_EX_MEM_write_reg == i_cortounit_ID_EX_rs)
-        i_cortounit_control_corto1 = 2'b01; 
-    else if (i_cortounit_MEM_WB_RegWrite && i_cortounit_MEM_WB_write_reg != 0 && i_cortounit_MEM_WB_write_reg == i_cortounit_ID_EX_rs)
-        i_cortounit_control_corto1 = 2'b10;   
+    //if (i_cortounit_EX_MEM_RegWrite && i_cortounit_EX_MEM_write_reg != 0 && i_cortounit_EX_MEM_write_reg == i_cortounit_ID_EX_rs)
+    if (i_cortounit_EX_MEM_RegWrite && i_cortounit_EX_MEM_write_reg == i_cortounit_ID_EX_rs)
+        o_cortounit_control_corto1 = 2'b01; 
+    //else if (i_cortounit_MEM_WB_RegWrite && i_cortounit_MEM_WB_write_reg != 0 && i_cortounit_MEM_WB_write_reg == i_cortounit_ID_EX_rs)
+    else if (i_cortounit_MEM_WB_RegWrite && i_cortounit_MEM_WB_write_reg == i_cortounit_ID_EX_rs)
+        o_cortounit_control_corto1 = 2'b10;   
     else
-        i_cortounit_control_corto1 = 2'b00;    
+        o_cortounit_control_corto1 = 2'b00;    
 
     //operando2 (rt)    
-    if (i_cortounit_EX_MEM_RegWrite && i_cortounit_EX_MEM_write_reg != 0 && i_cortounit_EX_MEM_write_reg == i_cortounit_ID_EX_rt)
-        i_cortounit_control_corto2 = 2'b01; 
-    else if (i_cortounit_MEM_WB_RegWrite && i_cortounit_MEM_WB_write_reg != 0 && i_cortounit_MEM_WB_write_reg == i_cortounit_ID_EX_rt)
-        i_cortounit_control_corto2 = 2'b10;   
+    //if (i_cortounit_EX_MEM_RegWrite && i_cortounit_EX_MEM_write_reg != 0 && i_cortounit_EX_MEM_write_reg == i_cortounit_ID_EX_rt)
+    if (i_cortounit_EX_MEM_RegWrite && i_cortounit_EX_MEM_write_reg == i_cortounit_ID_EX_rt)
+        o_cortounit_control_corto2 = 2'b01; 
+    //else if (i_cortounit_MEM_WB_RegWrite && i_cortounit_MEM_WB_write_reg != 0 && i_cortounit_MEM_WB_write_reg == i_cortounit_ID_EX_rt)
+    else if (i_cortounit_MEM_WB_RegWrite && i_cortounit_MEM_WB_write_reg == i_cortounit_ID_EX_rt)
+        o_cortounit_control_corto2 = 2'b10;   
     else
-        i_cortounit_control_corto2 = 2'b00;
+        o_cortounit_control_corto2 = 2'b00;
 end
 
 endmodule

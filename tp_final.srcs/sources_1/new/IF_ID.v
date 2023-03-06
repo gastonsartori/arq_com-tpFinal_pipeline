@@ -9,10 +9,10 @@ module IF_ID#(
        input                       i_if_id_write_enable,         //Señal desde la Stall Unit para actuualizar o no los registros
        input                       i_if_id_flush,                //Señal para descartar los registros (en caso de un branch)
        input  [NB_PC-1:0]          i_if_id_pc,
-       input  [NP_INSTR-1:0]       i_if_id_instruction,
+       input  [NB_INSTR-1:0]       i_if_id_instruction,
 
        output reg [NB_PC-1:0]          o_if_id_pc,
-       output reg [NP_INSTR-1:0]       o_if_id_instruction                               
+       output reg [NB_INSTR-1:0]       o_if_id_instruction                               
 );
 
 always@(posedge i_if_id_clock) 
@@ -20,7 +20,7 @@ begin
        if(i_if_id_reset || i_if_id_flush)
        begin
               o_if_id_pc <= 0;
-              o_if_id_instruction <=0;
+              o_if_id_instruction <= 'haaaaaaaa; // Instruccion no definida, no ejecuta nada
        end
        else if(i_if_id_write_enable) // Si la Stall Unit habilita la escritura
        begin 

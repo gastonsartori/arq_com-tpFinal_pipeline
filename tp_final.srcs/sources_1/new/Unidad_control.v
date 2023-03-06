@@ -61,7 +61,7 @@ module Unidad_control #(
     input                   i_controlunit_zero, i_controlunit_branch, // Señales desde EX/MEM, si salida de la alu fie 0 y si era una instruccion de branch
     input [NB_OP-1:0]       i_controlunit_op,
     input [NB_FUNCTION-1:0]  i_controlop_funct,
-
+   
     //Señales de control para las diferentes etapas
     //IF
     output reg [1:0]            o_controlunit_PcSrc,    //especifica que entrada del mux sera el nuevo PC
@@ -82,23 +82,27 @@ module Unidad_control #(
 
     //Señales de Flush para los regsitros de segmentacion en caso de branch
     output  reg             o_controlunit_IF_ID_Flush,
-    output  reg             o_controlunit_EX_MEM_Flush  
+    output  reg             o_controlunit_EX_MEM_Flush,
+    output  reg             o_controlunit_excute_branch
+    
 );
 
 //Señal que indica que se debe ejecutar un branch, salida de la alu en 0 y la instruccion era un branch
-wire control_unit_ID_EX_Flush = i_controlunit_zero && i_controlunit_branch;
+wire control_unit_ID_Flush = i_controlunit_zero & i_controlunit_branch;
 
 //Generacion de las señales de control
 always@(*)
 begin
     //Si se ejecuto un branch, flush sobre las señales de IF/ID, ID,EX y EX/MEM y ejecuta el salto
-    if(control_unit_ID_EX_Flush)
+    if(control_unit_ID_Flush)
     begin
         o_controlunit_IF_ID_Flush = 1'b1;
-        o_controlunit_EX_MEM_Flush = 1'b1;
+        o_controlunit_EX_MEM_Flush = 1'b1;    //Evita la ejecucion de la instruccion Branch+4
 
-        o_controlunit_PcSrc = 2'b01;           //IF (PC <= PC + offset + 1) (segunda entrada del mux)
+        o_controlunit_PcSrc = 2'b00;           
+        o_controlunit_excute_branch = 1'b1;     //IF (PC <= PC + offset + 1) (segunda entrada del mux)
         
+        //equivale a ID_EX flush
         o_controlunit_RegDst = 2'b00;
         o_controlunit_ALUSrc = 2'b00; 
         o_controlunit_ALUOp = R_TYPE_ALUOP; 
@@ -111,12 +115,15 @@ begin
         
         o_controlunit_RegWrite =  1'b0;
         o_controlunit_MemtoReg =  2'b00;
-    end
 
+    end
+ 
     else if(i_controlunit_enable)
     begin
+
         o_controlunit_IF_ID_Flush = 1'b0;
         o_controlunit_EX_MEM_Flush = 1'b0;
+        o_controlunit_excute_branch = 1'b0;
 
         case(i_controlunit_op)
             R_TYPE_OPCODE:
@@ -464,7 +471,7 @@ begin
             end
             BEQ_OPCODE:
             begin
-                o_controlunit_PcSrc = 2'b01;           
+                o_controlunit_PcSrc = 2'b00;           
                 
                 o_controlunit_RegDst = 2'b00;   //no se usa
                 o_controlunit_ALUSrc = 2'b00;   
@@ -481,7 +488,7 @@ begin
             end
             BNE_OPCODE:
             begin
-                o_controlunit_PcSrc = 2'b01;           
+                o_controlunit_PcSrc = 2'b00;           
                 
                 o_controlunit_RegDst = 2'b00;   //no se usa
                 o_controlunit_ALUSrc = 2'b00;   

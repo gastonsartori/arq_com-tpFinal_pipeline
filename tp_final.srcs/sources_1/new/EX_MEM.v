@@ -62,6 +62,7 @@ module EX_MEM#(
         o_ex_mem_MemtoReg       <= 0;
         o_ex_mem_BHW            <= 0;
         o_ex_mem_ExtSign        <= 0;
+
     end
     else
     begin
@@ -80,6 +81,7 @@ module EX_MEM#(
             o_ex_mem_MemtoReg       <= i_ex_mem_MemtoReg;
             o_ex_mem_BHW            <= i_ex_mem_BHW;
             o_ex_mem_ExtSign        <= i_ex_mem_ExtSign;
+
         end
     end
  end

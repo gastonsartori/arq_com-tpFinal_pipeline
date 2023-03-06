@@ -28,7 +28,7 @@ module Debug_unit#(
         parameter   NB_RS = 5,
         parameter   NB_TX = 8,              // Bits de TX
         parameter   NB_STATE = 8,        // Bits de estado
-        parameter   MEM_DEPTH = 256
+        parameter   MEM_DEPTH = 256    
 )(
         input i_debugunit_clock,
         input i_debugunit_reset,
@@ -69,8 +69,10 @@ localparam CODE_MODO_CONTINUO       = 8'b00000010;
 localparam CODE_MODO_PASO_A_PASO    = 8'b00000100;
 localparam CODE_SEND_PC             = 8'b00001000;
 localparam CODE_SEND_REGS           = 8'b00010000;
-localparam CODE_SEND_MEM           = 8'b00100000;
+localparam CODE_SEND_MEM            = 8'b00100000;
+localparam ESPERA_CODE              = 32'b11110000111100001111000011110000;
 
+localparam HALT_INST = 32'b11111111111111111111111111111111;
 
 reg [NB_INSTR-1:0] instr_buffer, instr_buffer_next;
 reg [$clog2 (NB_INSTR/NB_RX) : 0] contador_palabras, contador_palabras_next;
@@ -88,6 +90,8 @@ reg sending_regs_flag,sending_regs_flag_next;
 reg [NB_REG-1 : 0] contador_memoria, contador_memoria_next; 
 reg sending_mem_flag,sending_mem_flag_next;
 
+reg espera_flag,espera_flag_next;
+
 always@(posedge i_debugunit_clock)
 begin
     if(i_debugunit_reset)
@@ -102,6 +106,7 @@ begin
         sending_regs_flag <= 0;
         contador_memoria <= 0;
         sending_mem_flag <= 0;
+        espera_flag <= 0;
 
     end
     else
@@ -116,11 +121,12 @@ begin
         sending_regs_flag <= sending_regs_flag_next;
         contador_memoria <= contador_memoria_next;
         sending_mem_flag <= sending_mem_flag_next;
+        espera_flag <= espera_flag_next;
     end
 end
 
 always@(*) begin
-    //state_next = state;
+    state_next = state;
     instr_buffer_next = instr_buffer;
     contador_palabras_next = contador_palabras;
     contador_instr_next = contador_instr;
@@ -130,33 +136,50 @@ always@(*) begin
     contador_registros_next = contador_registros;
     contador_memoria_next = contador_memoria;
     sending_mem_flag_next = sending_mem_flag;
+    espera_flag_next = espera_flag;
 
     case(state)
         ESPERA: begin
             tx_data_done = 0;
             contador_palabras_next = 0;
+
+            if(espera_flag == 0)
+            begin
+                send_data_buffer_next = ESPERA_CODE;
+                espera_flag_next = 1;
+                state_next = SEND_DATA;
+            end
+
             if(i_debugunit_rx_done) begin
                 rx_done_flag_next = 1;
                 if(rx_done_flag==0) //solo si el done esta en 1 pero en el ciclo anterior estuvo bajo
                 begin
                     if(i_debugunit_rx_data == CODE_CARGA_INSTR) begin
                         state_next = CARGANDO;
+                        espera_flag_next = 0;
                     end
-                    if(i_debugunit_rx_data == CODE_MODO_CONTINUO) begin
+                    else if(i_debugunit_rx_data == CODE_MODO_CONTINUO) begin
                         state_next = MODO_CONTINUO;
+                        espera_flag_next = 0;
                     end
-                    if(i_debugunit_rx_data == CODE_MODO_PASO_A_PASO) begin
+                    else if(i_debugunit_rx_data == CODE_MODO_PASO_A_PASO) begin
                         state_next = MODO_PASO_A_PASO;
+                        espera_flag_next = 0;
                     end
-                    if(i_debugunit_rx_data == CODE_SEND_PC)begin
+                    else if(i_debugunit_rx_data == CODE_SEND_PC)begin
                         send_data_buffer_next = i_debugunit_pc;
                         state_next = SEND_DATA;
                     end
-                    if(i_debugunit_rx_data == CODE_SEND_REGS)begin
+                    else if(i_debugunit_rx_data == CODE_SEND_REGS)begin
                         state_next = SEND_REGS;
                     end
-                    if(i_debugunit_rx_data == CODE_SEND_MEM)begin
+                    else if(i_debugunit_rx_data == CODE_SEND_MEM)begin
                         state_next = SEND_MEM;
+                    end
+                    else begin
+                        espera_flag_next = 0;
+                        state_next = ESPERA;
+
                     end
                 end
             end
@@ -185,9 +208,13 @@ always@(*) begin
 
         end
         LISTO: begin
-            state_next=ESPERA;
             contador_instr_next = contador_instr+1;
             instr_buffer_next = 0;
+            if(instr_buffer == HALT_INST)
+                state_next=ESPERA;
+            else 
+                state_next=CARGANDO;
+
             //rx_done_flag_next = 0;
         end
         

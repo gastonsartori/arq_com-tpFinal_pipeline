@@ -38,7 +38,7 @@ module ID_EX#(
     input [1:0]             i_id_ex_MemtoReg,
     input [1:0]             i_id_ex_BHW,              //Señal de control que indica el tamaño del direccioonamiento (00->byte, 01->halfword, 10->word) 
     input                   i_id_ex_ExtSign,          //Señal de control que indica si extender el signo del dato leido o no
-     
+    input [NB_PC-1:0]       i_id_ex_jump_addr,
 
     output reg [NB_PC - 1 :0]    o_id_ex_pc,
     output reg [NB_REG - 1 :0]   o_id_ex_dataA, o_id_ex_dataB,
@@ -56,7 +56,9 @@ module ID_EX#(
     output reg                   o_id_ex_RegWrite, 
     output reg [1:0]             o_id_ex_MemtoReg, 
     output reg [1:0]             o_id_ex_BHW,              //Señal de control que indica el tamaño del direccioonamiento (00->byte, 01->halfword, 10->word) 
-    output reg                   o_id_ex_ExtSign          //Señal de control que indica si extender el signo del dato leido o no
+    output reg                   o_id_ex_ExtSign,          //Señal de control que indica si extender el signo del dato leido o no
+    output reg [NB_PC-1:0]       o_id_ex_jump_addr
+
 );
 
 always@(posedge i_id_ex_clock) 
@@ -81,6 +83,7 @@ begin
             o_id_ex_MemtoReg <=0;
             o_id_ex_BHW <= 0;
             o_id_ex_ExtSign <= 0;
+            o_id_ex_jump_addr <= 0;
        end
        else if(i_id_ex_write_enable) // Si la Stall Unit habilita la escritura
        begin 
@@ -102,6 +105,7 @@ begin
             o_id_ex_MemtoReg <= i_id_ex_MemtoReg;
             o_id_ex_BHW <= i_id_ex_BHW;
             o_id_ex_ExtSign <= i_id_ex_ExtSign;
+            o_id_ex_jump_addr <= i_id_ex_jump_addr;
        end
 end
 

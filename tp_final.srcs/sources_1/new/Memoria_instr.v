@@ -5,7 +5,7 @@
 module Mem_instruction#(
         
         parameter   NB_INSTR = 32,                                  // Ancho de instruccion
-        parameter   NB_MEMORY_DEPTH = 14,                           // Numero de entradas de la memoria
+        parameter   NB_MEMORY_DEPTH = 32,                           // Numero de entradas de la memoria
         parameter   NB_DIRECTION = $clog2(NB_MEMORY_DEPTH)+2,     // Log base 2 de la cantidad de entradas a memoria para asi direccionar
         parameter   INIT_FILE = "out.mem"                    
         
@@ -13,7 +13,6 @@ module Mem_instruction#(
     (
         input   wire                            i_instmem_clock,
         input   wire                            i_instmem_reset,
-        input   wire                            i_instmem_read_e,
         input   wire                            i_instmem_enable,
         input   wire [NB_DIRECTION - 1 : 0]     i_instmem_instr_addr,     // Bus de direcciones para la escritura
         input   wire [NB_INSTR - 1 : 0]         i_instmem_instr_data,     // Input para la escritura

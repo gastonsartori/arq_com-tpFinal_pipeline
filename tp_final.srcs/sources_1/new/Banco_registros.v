@@ -90,21 +90,21 @@ begin
     begin
         for (reg_index = 0; reg_index < REG_DEPTH; reg_index = reg_index + 1)
           registers[reg_index] <= {NB_DATA{1'b0}};
-        regbank_dataA <=  {NB_DATA{1'b0}};
-        regbank_dataB <=  {NB_DATA{1'b0}};
     end
-    else
+    else if (i_regbank_RegWrite) 
     begin
-        if (i_regbank_RegWrite) 
-        begin
-            registers[i_regbank_rW] <= i_regbank_dataW;
-        end
+        registers[i_regbank_rW] <= i_regbank_dataW;
     end
 end
 
 always @(negedge i_regbank_clock)
 begin
-    if(i_regbank_enable)
+    if(i_regbank_reset)
+    begin
+        regbank_dataA <=  {NB_DATA{1'b0}};
+        regbank_dataB <=  {NB_DATA{1'b0}};
+    end
+    else if(i_regbank_enable)
     begin
         regbank_dataA <= registers[i_regbank_rA];
         regbank_dataB <= registers[i_regbank_rB];

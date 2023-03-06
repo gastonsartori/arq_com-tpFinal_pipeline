@@ -84,7 +84,6 @@ Sumador Sumador_IF(
 Mem_instruction Mem_instruction(
     .i_instmem_clock(i_if_clock),
     .i_instmem_reset(i_if_reset),
-    .i_instmem_read_e(i_if_read_e),
     .i_instmem_enable(i_if_mem_enable),
     .i_instmem_instr_addr(i_if_instr_addr),
     .i_instmem_instr_data(i_if_instr_data),

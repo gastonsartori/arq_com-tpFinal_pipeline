@@ -56,6 +56,7 @@ module EX#(
     output [1:0]                    o_ex_MemtoReg,
     output [1:0]                    o_ex_BHW,              //Señal de control que indica el tamaño del direccioonamiento (00->byte, 01->halfword, 10->word) 
     output                          o_ex_ExtSign          //Señal de control que indica si extender el signo del dato leido o no         
+
 );
 
 wire [NB_REG - 1 : 0]   dataA_anticipado;
@@ -129,7 +130,7 @@ ALU ALU(
 );
 
 assign o_ex_pc = i_ex_pc;
-assign o_ex_dataB = i_ex_dataB;
+assign o_ex_dataB = dataB_anticipado;
 assign o_ex_MemRead = i_ex_MemRead;
 assign o_ex_MemWrite = i_ex_MemWrite;
 assign o_ex_Branch = i_ex_Branch;
