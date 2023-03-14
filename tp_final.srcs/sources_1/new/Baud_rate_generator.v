@@ -4,7 +4,7 @@
 //contador modulo = 163
 
 module Baud_rate_generator#(
-    parameter N_MODULE = 2,
+    parameter N_MODULE =  163,
     parameter NB_COUNT = 9
     )(
     input wire i_clock,

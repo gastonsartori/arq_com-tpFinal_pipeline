@@ -51,7 +51,8 @@ module Debug_unit#(
         output reg [NB_TX-1:0]  o_debugunit_tx_data,
         output reg              o_debugunit_tx_data_done,
 
-        output reg [NB_RS-1:0] o_debugunit_reg_addr //direccion del registro para lectura
+        output reg [NB_RS-1:0] o_debugunit_reg_addr, //direccion del registro para lectura
+        output [NB_STATE-1:0] o_debugunit_state
 
 );
 
@@ -64,13 +65,14 @@ localparam SEND_DATA            = 8'b00100000;
 localparam SEND_REGS            = 8'b01000000;
 localparam SEND_MEM            = 8'b10000000;
 
-localparam CODE_CARGA_INSTR         = 8'b00000001;
-localparam CODE_MODO_CONTINUO       = 8'b00000010;
-localparam CODE_MODO_PASO_A_PASO    = 8'b00000100;
-localparam CODE_SEND_PC             = 8'b00001000;
-localparam CODE_SEND_REGS           = 8'b00010000;
-localparam CODE_SEND_MEM            = 8'b00100000;
+localparam CODE_CARGA_INSTR         = 8'b00000001; //0x01
+localparam CODE_MODO_CONTINUO       = 8'b00000010; //0x02
+localparam CODE_MODO_PASO_A_PASO    = 8'b00000100; //0x04
+localparam CODE_SEND_PC             = 8'b00001000; //0x08
+localparam CODE_SEND_REGS           = 8'b00010000; //0x10
+localparam CODE_SEND_MEM            = 8'b00100000; //0x20
 localparam ESPERA_CODE              = 32'b11110000111100001111000011110000;
+localparam CARGANDO_CODE            = 32'b11111111111111111111111111111111;
 
 localparam HALT_INST = 32'b11111111111111111111111111111111;
 
@@ -92,6 +94,15 @@ reg sending_mem_flag,sending_mem_flag_next;
 
 reg espera_flag,espera_flag_next;
 
+reg sending_cargando_flag,sending_cargando_flag_next;
+reg cargando_flag,cargando_flag_next;
+
+//reg sending_listo_flag,sending_listo_flag_next;
+//reg listo_flag,listo_flag_next;
+reg enable, next_enable;
+
+assign o_debugunit_state = state;
+
 always@(posedge i_debugunit_clock)
 begin
     if(i_debugunit_reset)
@@ -107,6 +118,11 @@ begin
         contador_memoria <= 0;
         sending_mem_flag <= 0;
         espera_flag <= 0;
+        cargando_flag <= 0;
+        sending_cargando_flag <= 0;
+        enable <=0;
+        //listo_flag <= 0;
+        //sending_listo_flag <= 0;
 
     end
     else
@@ -122,6 +138,12 @@ begin
         contador_memoria <= contador_memoria_next;
         sending_mem_flag <= sending_mem_flag_next;
         espera_flag <= espera_flag_next;
+        cargando_flag <= cargando_flag_next;
+        sending_cargando_flag <= sending_cargando_flag_next;
+        enable <= next_enable;
+        
+        //listo_flag <= listo_flag_next;
+        //sending_listo_flag <= sending_listo_flag_next;
     end
 end
 
@@ -137,18 +159,21 @@ always@(*) begin
     contador_memoria_next = contador_memoria;
     sending_mem_flag_next = sending_mem_flag;
     espera_flag_next = espera_flag;
-
+    cargando_flag_next = cargando_flag;
+    next_enable = enable;
+    //sending_listo_flag_next = sending_listo_flag;
+    //listo_flag_next = listo_flag;
     case(state)
         ESPERA: begin
             tx_data_done = 0;
             contador_palabras_next = 0;
 
-            if(espera_flag == 0)
-            begin
-                send_data_buffer_next = ESPERA_CODE;
-                espera_flag_next = 1;
-                state_next = SEND_DATA;
-            end
+            //if(espera_flag == 0)
+            //begin
+            //    send_data_buffer_next = ESPERA_CODE;
+            //    espera_flag_next = 1;
+            //    state_next = SEND_DATA;
+            //end
 
             if(i_debugunit_rx_done) begin
                 rx_done_flag_next = 1;
@@ -156,15 +181,15 @@ always@(*) begin
                 begin
                     if(i_debugunit_rx_data == CODE_CARGA_INSTR) begin
                         state_next = CARGANDO;
-                        espera_flag_next = 0;
+                        //espera_flag_next = 0;
                     end
                     else if(i_debugunit_rx_data == CODE_MODO_CONTINUO) begin
                         state_next = MODO_CONTINUO;
-                        espera_flag_next = 0;
+                        //espera_flag_next = 0;
                     end
                     else if(i_debugunit_rx_data == CODE_MODO_PASO_A_PASO) begin
                         state_next = MODO_PASO_A_PASO;
-                        espera_flag_next = 0;
+                        //espera_flag_next = 0;
                     end
                     else if(i_debugunit_rx_data == CODE_SEND_PC)begin
                         send_data_buffer_next = i_debugunit_pc;
@@ -177,9 +202,8 @@ always@(*) begin
                         state_next = SEND_MEM;
                     end
                     else begin
-                        espera_flag_next = 0;
+                        //espera_flag_next = 0;
                         state_next = ESPERA;
-
                     end
                 end
             end
@@ -187,12 +211,20 @@ always@(*) begin
                 rx_done_flag_next = 0;
         end
         CARGANDO: begin
+            //if(cargando_flag == 0)
+            //begin
+                //send_data_buffer_next = CARGANDO_CODE;
+                //sending_cargando_flag_next = 1;
+                //cargando_flag_next = 1;
+                //state_next = SEND_DATA;
+            //end
             if(i_debugunit_rx_done) begin
                 rx_done_flag_next = 1;
                 if(rx_done_flag==0) //solo si el done esta en 1 pero en el ciclo anterior estuvo bajo
                 begin
-                    instr_buffer_next = {i_debugunit_rx_data, instr_buffer[NB_INSTR-1:NB_RX]};
-                    
+                    //instr_buffer_next = {i_debugunit_rx_data, instr_buffer[NB_INSTR-1:NB_RX]};
+                    instr_buffer_next = { instr_buffer[NB_INSTR-NB_RX-1:0],i_debugunit_rx_data};
+
                     if(contador_palabras == (NB_INSTR/NB_RX)-1) begin
                         contador_palabras_next = 0;
                         state_next = LISTO;
@@ -209,16 +241,21 @@ always@(*) begin
         end
         LISTO: begin
             contador_instr_next = contador_instr+1;
-            instr_buffer_next = 0;
+            //instr_buffer_next = 0;
+            
             if(instr_buffer == HALT_INST)
+            begin
+                //sending_cargando_flag_next = 0;
+                //cargando_flag_next = 0;
                 state_next=ESPERA;
+            end
             else 
                 state_next=CARGANDO;
-
             //rx_done_flag_next = 0;
         end
         
         MODO_CONTINUO: begin
+            next_enable = ~enable;
             if(i_debugunit_halt)
                 state_next = ESPERA;
             else
@@ -234,6 +271,7 @@ always@(*) begin
             if(contador_registros == 32)
             begin
                 sending_regs_flag_next = 0;
+                contador_registros_next = 0;
                 state_next = ESPERA;
             end
             else
@@ -250,6 +288,7 @@ always@(*) begin
             if(contador_memoria == MEM_DEPTH)
             begin
                 sending_mem_flag_next = 0;
+                contador_memoria_next = 0;
                 state_next = ESPERA;
             end
             else
@@ -265,18 +304,23 @@ always@(*) begin
             rx_done_flag_next = 0;
             if(i_debugunit_tx_done) begin
 
-                if(contador_palabras == (NB_INSTR/NB_RX)) begin
+                if(contador_palabras == (NB_INSTR/NB_RX)-1) begin
                     contador_palabras_next = 0;
                     if(sending_regs_flag)
                         state_next = SEND_REGS;
                     else if(sending_mem_flag)
                         state_next = SEND_MEM;
+                    //else if(sending_cargando_flag)
+                    //    state_next = CARGANDO;
+                    //else if(sending_listo_flag)
+                    //    state_next = LISTO;
                     else
                         state_next = ESPERA;
                 end
                 else begin
                     tx_data_done = 1;
-                    send_data_buffer_next = send_data_buffer>>8;
+                    //send_data_buffer_next = send_data_buffer>>8;
+                    send_data_buffer_next = send_data_buffer<<8;
                     contador_palabras_next = contador_palabras + 1;
                     state_next = SEND_DATA;
                 end
@@ -334,7 +378,7 @@ always@(*) begin
         MODO_CONTINUO: begin
             o_debugunit_instr_data = 0;
             o_debugunit_instr_addr = 0;
-            o_debugunit_enable = 1;
+            o_debugunit_enable = enable;
             o_debugunit_instr_done = 0;
             o_debugunit_tx_data=0;
             o_debugunit_tx_data_done=0;
@@ -360,7 +404,8 @@ always@(*) begin
             o_debugunit_instr_addr = 0;
             o_debugunit_enable = 0;
             o_debugunit_instr_done = 0;
-            o_debugunit_tx_data=send_data_buffer[NB_TX-1:0];
+            //o_debugunit_tx_data=send_data_buffer[NB_TX-1:0];
+            o_debugunit_tx_data=send_data_buffer[NB_INSTR-1:NB_INSTR-NB_TX];
             o_debugunit_tx_data_done=tx_data_done;
             o_debugunit_reg_addr = contador_registros[NB_RS-1:0];
             o_debugunit_read_addr = contador_memoria;
@@ -372,7 +417,7 @@ always@(*) begin
             o_debugunit_instr_addr = 0;
             o_debugunit_enable = 0;
             o_debugunit_instr_done = 0;
-            o_debugunit_tx_data=send_data_buffer[NB_TX-1:0];
+            o_debugunit_tx_data=send_data_buffer[NB_INSTR-1:NB_INSTR-NB_TX];
             o_debugunit_tx_data_done=tx_data_done;
             o_debugunit_reg_addr = contador_registros[NB_RS-1:0];
             o_debugunit_read_addr = 0;
@@ -383,7 +428,7 @@ always@(*) begin
             o_debugunit_instr_addr = 0;
             o_debugunit_enable = 0;
             o_debugunit_instr_done = 0;
-            o_debugunit_tx_data=send_data_buffer[NB_TX-1:0];
+            o_debugunit_tx_data=send_data_buffer[NB_INSTR-1:NB_INSTR-NB_TX];
             o_debugunit_tx_data_done=tx_data_done;
             o_debugunit_reg_addr = 0;
             o_debugunit_read_addr = contador_memoria;

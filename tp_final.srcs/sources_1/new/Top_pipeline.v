@@ -60,7 +60,7 @@ module Top_pipeline#(
 
     output      [NB_REG - 1 :0] o_pipeline_reg_data,
 
-    output [NB_REG - 1 : 0]     o_pipeline_WB_data, //lo que se escribe en los registros
+    //output [NB_REG - 1 : 0]     o_pipeline_WB_data, //lo que se escribe en los registros
     output                      o_pipeline_halt, //señal hacia la debug unit, cuando se leyo un halt
     output  [NB_PC-1:0]         o_pipeline_pc  //valor del pc, hacia la debug unit
 
@@ -120,7 +120,7 @@ module Top_pipeline#(
     wire [1:0]          ID_MemtoReg_to_ID_EX;
     wire [1:0]          ID_PcSrc_to_ID_EX;
     wire                ID_IF_ID_Flush;
-    wire                ID_EX_MEM_Flush_to_ID_EX;
+    wire                ID_EX_MEM_Flush;
     wire [NB_PC-1:0]    ID_jump_addr_to_ID_EX;
 
     //ID/EX to EX
@@ -193,7 +193,7 @@ module Top_pipeline#(
     wire                MEM_WB_RegWrite_to_WB;
     wire [1:0]          MEM_WB_MemtoReg_to_WB;
 
-    assign o_pipeline_WB_data = WB_data;
+    //assign o_pipeline_WB_data = WB_data;
 
     Unidad_deteccion_riesgos Unidad_deteccion_riesgos(
         .i_riesgounit_ID_EX_MemRead(ID_EX_MemRead_to_EX),

@@ -17,15 +17,23 @@ module IF_ID#(
 
 always@(posedge i_if_id_clock) 
 begin
-       if(i_if_id_reset || i_if_id_flush)
+       if(i_if_id_reset)
        begin
               o_if_id_pc <= 0;
               o_if_id_instruction <= 'haaaaaaaa; // Instruccion no definida, no ejecuta nada
        end
        else if(i_if_id_write_enable) // Si la Stall Unit habilita la escritura
        begin 
-              o_if_id_pc <= i_if_id_pc;
-              o_if_id_instruction <= i_if_id_instruction;
+              if(i_if_id_flush)
+              begin
+                     o_if_id_pc <= 0;
+                     o_if_id_instruction <= 'haaaaaaaa; // Instruccion no definida, no ejecuta nada
+              end
+              else
+              begin
+                     o_if_id_pc <= i_if_id_pc;
+                     o_if_id_instruction <= i_if_id_instruction;
+              end
        end
 end
     

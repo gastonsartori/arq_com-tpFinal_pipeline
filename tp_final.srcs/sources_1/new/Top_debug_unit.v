@@ -26,7 +26,8 @@ module Top_debug_unit#(
     parameter   NB_RX = 8,              // Bits de RX
     parameter   NB_TX = 8,              // Bits de TX
     parameter   NB_RS = 5,
-    parameter   NB_REG = 32
+    parameter   NB_REG = 32,
+    parameter   NB_STATE = 8        // Bits de estado
     
 
 )(
@@ -45,7 +46,8 @@ module Top_debug_unit#(
     output o_top_du_instr_done,
     output [NB_RS-1:0] o_top_du_reg_addr,
 
-    output o_top_du_tx
+    output o_top_du_tx,
+    output [NB_STATE-1:0] o_top_du_state
 );
 
 wire tick;
@@ -99,7 +101,8 @@ Debug_unit Debug_unit(
     .o_debugunit_instr_done(o_top_du_instr_done),
     .o_debugunit_tx_data(data_to_tx),
     .o_debugunit_tx_data_done(data_done_to_tx),
-    .o_debugunit_reg_addr(o_top_du_reg_addr)
+    .o_debugunit_reg_addr(o_top_du_reg_addr),
+    .o_debugunit_state(o_top_du_state)
 );
 
 endmodule

@@ -31,7 +31,7 @@ reg [NB_DATA-1:0] mem_data [MEM_DEPTH-1:0]; //datos en registros de 8
 integer reg_index;
 
 //salida de lectura hacia debug unit
-assign o_datamem_read_data =  {mem_data[i_datamem_read_addr+3],mem_data[i_datamem_read_addr+2],mem_data[i_datamem_read_addr+1],mem_data[i_datamem_read_addr]};
+assign o_datamem_read_data =  {mem_data[i_datamem_read_addr],mem_data[i_datamem_read_addr+1],mem_data[i_datamem_read_addr+2],mem_data[i_datamem_read_addr+3]};
 
 always 	@(posedge i_datamem_clock)		   //Memory write
 begin
@@ -51,7 +51,7 @@ begin
                 end
                 BHW_HALF: begin     //Determinar en que mitad del reg de 32 escribir.
                     mem_data[i_datamem_addr] <= i_datamem_dataW[7:0];
-                    mem_data[i_datamem_addr+1] <= i_datamem_dataW[15:7];
+                    mem_data[i_datamem_addr+1] <= i_datamem_dataW[15:8];
                 end
                 BHW_WORD: begin
                     mem_data[i_datamem_addr] <= i_datamem_dataW[7:0];

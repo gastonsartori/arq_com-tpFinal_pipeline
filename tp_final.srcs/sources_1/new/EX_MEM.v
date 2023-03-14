@@ -48,7 +48,7 @@ module EX_MEM#(
 );
 
  always@(posedge i_ex_mem_clock) begin
-    if(i_ex_mem_reset || i_ex_mem_flush) begin
+    if(i_ex_mem_reset) begin
         o_ex_mem_pc             <= 0;
         o_ex_mem_pc_offset      <= 0;
         o_ex_mem_alu_result     <= 0;
@@ -64,9 +64,25 @@ module EX_MEM#(
         o_ex_mem_ExtSign        <= 0;
 
     end
-    else
+    else if(i_ex_mem_enable)
     begin
-        if(i_ex_mem_enable)
+        if(i_ex_mem_flush)
+        begin
+            o_ex_mem_pc             <= 0;
+            o_ex_mem_pc_offset      <= 0;
+            o_ex_mem_alu_result     <= 0;
+            o_ex_mem_alu_zero       <= 0;
+            o_ex_mem_dataB          <= 0;
+            o_ex_mem_write_reg      <= 0;
+            o_ex_mem_MemRead        <= 0;
+            o_ex_mem_MemWrite       <= 0;
+            o_ex_mem_Branch         <= 0;
+            o_ex_mem_RegWrite       <= 0;
+            o_ex_mem_MemtoReg       <= 0;
+            o_ex_mem_BHW            <= 0;
+            o_ex_mem_ExtSign        <= 0;
+        end
+        else
         begin
             o_ex_mem_pc             <= i_ex_mem_pc;
             o_ex_mem_pc_offset      <= i_ex_mem_pc_offset;
@@ -81,7 +97,6 @@ module EX_MEM#(
             o_ex_mem_MemtoReg       <= i_ex_mem_MemtoReg;
             o_ex_mem_BHW            <= i_ex_mem_BHW;
             o_ex_mem_ExtSign        <= i_ex_mem_ExtSign;
-
         end
     end
  end

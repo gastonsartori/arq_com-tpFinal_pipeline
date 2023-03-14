@@ -24,7 +24,7 @@ module PC#(
         begin
             pc <= 0;
         end
-        else if(i_pc_enable && ~i_pc_halt)
+        else if(i_pc_enable)
         begin
             pc <= i_pc_mux;
         end
