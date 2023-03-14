@@ -13,6 +13,8 @@ INSTRUCTIONS = {
             'SUBU': {'funct':'100011'},
             'XOR': {'funct':'100110'},
             'AND': {'funct':'100100'},
+            'OR': {'funct':'100101'},
+            'XOR': {'funct':'100110'},
             'NOR': {'funct':'100111'},
             'SLT': {'funct':'101010'},
         },
@@ -31,7 +33,8 @@ INSTRUCTIONS = {
             },
             'INMEDIATE':{
                 'ADDI': {'opcode':'001000'},
-                'ORI': {'opcode':'001100'},
+                'ANDI': {'opcode':'001100'},
+                'ORI': {'opcode':'001101'},
                 'XORI': {'opcode':'001110'},
                 'LUI': {'opcode':'001111'},
                 'SLTI': {'opcode':'001010'},
@@ -77,13 +80,13 @@ if __name__ == "__main__":
     for line in input_lines:
         input_lines_list.append(line.splitlines()[0].split())
 
-    #print(input_lines_list)
+    print(input_lines_list)
 
     #guardar nombre de los label y el indece de instruccion al q apuntan
     labels={}
     for line in input_lines_list:
         #print(len(line))
-        if(len(line)==1 and (line[0] != 'nop' and line[0] != 'halt')): #un solo simbolo se toma como label (si no es nop ni halt)
+        if(len(line)==1 and (line[0] != 'nop' and line[0] != 'halt' and line[0] != 'NOP' and line[0] != 'HALT')): #un solo simbolo se toma como label (si no es nop ni halt)
             labels[line[0].replace(":",'')]=input_lines_list.index(line)-len(labels)
 
     #print(labels)
@@ -92,37 +95,45 @@ if __name__ == "__main__":
     output_lines_hexa = []
     bin_bytes = []
     #se quitan los labels
-    input_lines_list = [line for line in input_lines_list if len(line) > 1 or line[0] == "nop" or line[0] == "halt"]
+    input_lines_list = [line for line in input_lines_list if len(line) > 1 or line[0] == "nop" or line[0] == "halt" or line[0] == "NOP" or line[0] == "HALT"]
     #se recorren las lineas
     #print(input_lines_list)
     for line in input_lines_list:
         
         #el primer elemento de la linea es el nombre de la instucion
         instruction_name = line[0]
-        #print(instruction_name)
+        print(instruction_name)
         #los siguiente componentes de la linea son los operandos formato r1, offset(base) o valor
         operands = []
         #se quita el r y las , 
         for operand in line [1:]:
-            operands.append(operand.replace("r","").replace(",",''))
+            operands.append(operand.replace("r","").replace(",",'').replace("R",""))
 
         #print(operands)
 
         if(instruction_name in INSTRUCTIONS['R-TYPE'].keys()):
             op_code = "000000"
             shamt = "00000"
-
-            #se convierte cada operando a string binario
-            rd = "{:05b}".format(int(operands[0]))
-            rs = "{:05b}".format(int(operands[1]))
-            rt = "{:05b}".format(int(operands[2]))
-
             #campo funct de cada instruccion
             function = INSTRUCTIONS['R-TYPE'][instruction_name]['funct']
 
-            #se arma el string de la instruccion en binario
-            instruction_bin = op_code + rs + rt + rd + shamt + function
-        
+            if(instruction_name  == 'SLL' or instruction_name == 'SRL' or instruction_name == 'SRA'):
+            #se convierte cada operando a string binario
+                rd = "{:05b}".format(int(operands[0]))
+                rt = "{:05b}".format(int(operands[1]))
+                sa = "{:05b}".format(int(operands[2]))
+                instruction_bin = op_code + shamt + rt + rd + sa + function
+            elif(instruction_name  == 'SLLV' or instruction_name  == 'SRLV' or instruction_name  == 'SRAV' ):
+                rd = "{:05b}".format(int(operands[0]))
+                rt = "{:05b}".format(int(operands[1]))
+                rs = "{:05b}".format(int(operands[2]))
+                instruction_bin = op_code + rs + rt + rd + shamt + function
+            else:
+                rd = "{:05b}".format(int(operands[0]))
+                rs = "{:05b}".format(int(operands[1]))
+                rt = "{:05b}".format(int(operands[2]))
+                instruction_bin = op_code + rs + rt + rd + shamt + function
+
         elif(instruction_name in INSTRUCTIONS['I-TYPE']['MEMORY'].keys()):
             op_code = INSTRUCTIONS['I-TYPE']['MEMORY'][instruction_name]['opcode']
 
@@ -137,24 +148,34 @@ if __name__ == "__main__":
             instruction_bin = op_code + base + rt + offset
         
         elif(instruction_name in INSTRUCTIONS['I-TYPE']['INMEDIATE'].keys()):
+            #print(instruction_name)
             op_code = INSTRUCTIONS['I-TYPE']['INMEDIATE'][instruction_name]['opcode']
-
+            #print(operands)
             if(instruction_name == 'BEQ' or instruction_name == 'BNE'):
                 rs= "{:05b}".format(int(operands[0]))
                 rt= "{:05b}".format(int(operands[1]))
+            elif(instruction_name == 'LUI'):
+                rt= "{:05b}".format(int(operands[0]))
             else:
                 rt= "{:05b}".format(int(operands[0]))
                 rs= "{:05b}".format(int(operands[1]))
+
             #para el caso de BNE o BEQ el offset puede ser un label
             try:
-                inmediate = "{:016b}".format(int(operands[2]) & 0xffff) 
+                if(instruction_name == 'LUI'):
+                    inmediate = "{:016b}".format(int(operands[1]) & 0xffff)
+                else:
+                    inmediate = "{:016b}".format(int(operands[2]) & 0xffff) 
             except ValueError: #el index esta especificao con un label y no con un valor
                 dif = labels[operands[2]] - input_lines_list.index(line) -1
                 #print(dif)
                 inmediate = "{:016b}".format(dif & 0xffff)
                 #print(inmediate)
 
-            instruction_bin = op_code + rs + rt + inmediate
+            if(instruction_name == 'LUI'):
+                instruction_bin = op_code + "00000" + rt + inmediate
+            else:
+                instruction_bin = op_code + rs + rt + inmediate
         
         elif(instruction_name in INSTRUCTIONS['I-TYPE']['INST_INDEX'].keys()):
             op_code = INSTRUCTIONS['I-TYPE']['INST_INDEX'][instruction_name]['opcode']
@@ -183,7 +204,7 @@ if __name__ == "__main__":
                     rs= "{:05b}".format(int(operands[1]))
                 zeros_5 = "00000"
                 instruction_bin = op_code + rs + zeros_5 + rd + zeros_5 + function
-        elif(instruction_name == "halt"):
+        elif(instruction_name == "halt" or instruction_name == "HALT" ):
             instruction_bin = "11111111111111111111111111111111"
         else:
             #nop
